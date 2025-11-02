@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Kontrol Bot - FizzzModss</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'background': 'var(--bg-color)',
+                        'card': 'var(--card-color)',
+                        'text': 'var(--text-color)',
+                        'text-muted': 'var(--text-muted-color)',
+                        'border': 'var(--border-color)',
+                        'input-bg': 'var(--input-bg-color)',
+                        'accent': 'var(--accent-color)',
+                        'accent-hover': 'var(--accent-hover-color)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-color: #ffffff;
+            --text-color: #0f172a;
+            --text-muted-color: #64748b;
+            --border-color: #e2e8f0;
+            --input-bg-color: #f1f5f9;
+            --accent-color: #6366f1;
+            --accent-hover-color: #4f46e5;
+        }
+        html.dark {
+            --bg-color: #020617;
+            --card-color: #0f172a;
+            --text-color: #f1f5f9;
+            --text-muted-color: #94a3b8;
+            --border-color: #1e293b;
+            --input-bg-color: #1e293b;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .form-input, .form-textarea {
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-textarea:focus {
+            --tw-ring-color: var(--accent-color);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 25%, transparent);
+            border-color: var(--accent-color);
+        }
+        .btn {
+            transition: all 0.2s ease-out;
+        }
+        .btn:hover:not(:disabled) {
+            transform: scale(1.03);
+            filter: brightness(1.1);
+        }
+        .btn:active:not(:disabled) {
+            transform: scale(0.98);
+            filter: brightness(0.9);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes toastIn {
+            from { transform: translateX(calc(100% + 1.25rem)); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toastOut {
+            to { transform: translateX(calc(100% + 1.25rem)); opacity: 0; }
+        }
+        .toast { animation: toastIn 0.5s cubic-bezier(0.21, 1.02, 0.73, 1) forwards; }
+        .toast.removing { animation: toastOut 0.5s cubic-bezier(0.25, 0, 0.5, -0.2) forwards; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { animation: spin 0.8s linear infinite; }
+    </style>
+</head>
+<body class="antialiased bg-background text-text">
+    <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-3"></div>
+
+    <div class="container mx-auto p-4 md:p-6 lg:p-8">
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center gap-3">
+                <i class="ph-duotone ph-rocket-launch text-5xl text-accent"></i>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold">Bot Control Panel</h1>
+                    <p class="text-sm text-text-muted">Powerd By FikXzMods</p>
+                </div>
+            </div>
+            <button id="theme-toggle" class="btn p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                <i id="theme-icon" class="ph-duotone ph-sun text-2xl"></i>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="card bg-card border border-border p-6 rounded-xl shadow-lg space-y-4 fade-in">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i class="ph-duotone ph-gear-six"></i> Pengaturan Bot
+                    </h2>
+                    <input type="password" id="botToken" class="form-input bg-input-bg border border-border w-full p-3 rounded-lg" placeholder="1. Masukkan Token Bot">
+
+                    <div id="botInfoPanel" class="hidden p-4 rounded-lg bg-background space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div id="botPhoto" class="w-16 h-16 rounded-full bg-slate-400 dark:bg-slate-600 flex-shrink-0 bg-cover bg-center"></div>
+                            <div>
+                                <p id="botNameInfo" class="font-bold text-lg"></p>
+                                <p id="botUsername" class="text-sm text-text-muted"></p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-semibold">Nama Bot</label>
+                            <input type="text" id="editBotName" class="form-input bg-input-bg border border-border w-full p-2 mt-1 rounded-md text-sm">
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold">Deskripsi (Bio)</label>
+                            <textarea id="editBotBio" rows="3" class="form-textarea bg-input-bg border border-border w-full p-2 mt-1 rounded-md text-sm"></textarea>
+                        </div>
+                        <button id="saveProfileBtn" class="btn w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2">Simpan Teks Profil</button>
+
+                        <div class="pt-4 border-t border-border space-y-2">
+                            <label for="newProfilePhotoInput" class="text-sm font-semibold">Ganti Foto Profil</label>
+                            <input type="file" id="newProfilePhotoInput" class="block w-full text-sm text-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent file:text-white hover:file:bg-accent-hover" accept="image/png, image/jpeg">
+                            <button id="savePhotoBtn" class="btn w-full bg-accent-hover text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 mt-2">Update Foto</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-card border border-border p-6 rounded-xl shadow-lg space-y-4 fade-in" style="animation-delay: 100ms;">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i class="ph-duotone ph-terminal-window"></i> Log Aktivitas
+                    </h2>
+                    <div id="statusLog" class="h-64 bg-slate-200 dark:bg-slate-900/50 rounded-md p-3 text-sm font-mono overflow-y-auto">
+                        <p class="text-text-muted">Menunggu tindakan...</p>
+                    </div>
+                    <button id="clearLogBtn" class="btn w-full text-xs py-2 bg-slate-200 dark:bg-slate-700/50 hover:bg-slate-300 dark:hover:bg-slate-600">Bersihkan Log</button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1 space-y-6">
+                <div class="card bg-card border border-border p-6 rounded-xl shadow-lg space-y-4 fade-in" style="animation-delay: 200ms;">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <i class="ph-duotone ph-paper-plane-tilt"></i> Panel Pengiriman
+                    </h2>
+                    <input type="text" id="chatId" class="form-input bg-input-bg border border-border w-full p-3 rounded-lg" placeholder="2. Masukkan Chat ID Tujuan">
+
+                    <div id="media-tabs" class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <button data-tab="text" class="btn tab-button p-3 font-semibold rounded-lg flex items-center justify-center gap-2 bg-accent text-white">
+                            <i class="ph ph-text-t"></i> Teks
+                        </button>
+                        <button data-tab="photo" class="btn tab-button p-3 font-semibold rounded-lg flex items-center justify-center gap-2 bg-input-bg text-text-muted">
+                            <i class="ph ph-image"></i> Foto
+                        </button>
+                        <button data-tab="video" class="btn tab-button p-3 font-semibold rounded-lg flex items-center justify-center gap-2 bg-input-bg text-text-muted">
+                            <i class="ph ph-video"></i> Video
+                        </button>
+                        <button data-tab="file" class="btn tab-button p-3 font-semibold rounded-lg flex items-center justify-center gap-2 bg-input-bg text-text-muted">
+                            <i class="ph ph-file"></i> File
+                        </button>
+                    </div>
+
+                    <textarea id="caption" rows="3" class="form-textarea bg-input-bg border border-border w-full p-3 rounded-lg" placeholder="Tulis pesan atau caption di sini..."></textarea>
+
+                    <div id="media-input-area" class="hidden space-y-4">
+                        <div class="flex items-center justify-center p-1 rounded-full bg-input-bg">
+                            <button id="upload-mode-btn" class="btn flex-1 px-4 py-1.5 rounded-full text-sm font-semibold bg-accent text-white">Upload</button>
+                            <button id="url-mode-btn" class="btn flex-1 px-4 py-1.5 rounded-full text-sm font-semibold text-text-muted">URL</button>
+                        </div>
+
+                        <div id="upload-container">
+                            <label for="fileUpload" class="border-2 border-dashed border-border flex flex-col items-center justify-center w-full h-24 rounded-lg cursor-pointer hover:border-accent hover:bg-input-bg transition">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <i class="ph-duotone ph-cloud-arrow-up text-4xl text-text-muted"></i>
+                                    <p id="upload-text" class="mb-2 text-sm text-text-muted">
+                                        <span class="font-semibold">Klik untuk mengunggah</span>
+                                    </p>
+                                </div>
+                                <input id="fileUpload" type="file" class="hidden" />
+                            </label>
+                        </div>
+
+                        <div id="url-container" class="hidden">
+                            <input type="text" id="mediaUrl" class="form-input bg-input-bg border border-border w-full p-3 rounded-lg" placeholder="Tempel URL media di sini...">
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-border space-y-3">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="unstoppableSpam" class="h-4 w-4 rounded form-input bg-input-bg border-border text-accent focus:ring-accent">
+                            <label for="unstoppableSpam" class="ml-2 block text-sm">Spam Tanpa Henti</label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="number" id="spamCount" class="form-input bg-input-bg border border-border p-2 rounded-lg text-sm" placeholder="Jumlah (mis: 100)">
+                            <input type="number" id="spamDelay" class="form-input bg-input-bg border border-border p-2 rounded-lg text-sm" placeholder="Jeda (ms, mis: 500)">
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button id="sendOnceBtn" class="btn w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
+                                <span class="btn-text">Kirim Sekali</span>
+                            </button>
+                            <button id="startSpamBtn" class="btn w-full text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover">
+                                <span class="btn-text">Mulai Spam</span>
+                            </button>
+                        </div>
+                        <button id="stopSpamBtn" class="btn w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 opacity-50 cursor-not-allowed" disabled>Hentikan</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1 space-y-6">
+                <div class="card bg-card border border-border p-6 rounded-xl shadow-lg h-[85vh] flex flex-col fade-in" style="animation-delay: 300ms;">
+                    <h2 class="text-xl font-bold flex items-center gap-2 border-b border-border pb-2 mb-4">
+                        <i class="ph-duotone ph-chat-teardrop-dots"></i> Monitor & Balas Pesan
+                    </h2>
+                    <div id="messageMonitor" class="flex-grow overflow-y-auto space-y-3 pr-2">
+                        <p class="text-text-muted">Menunggu token bot yang valid...</p>
+                    </div>
+                    <button id="clearMonitorBtn" class="btn w-full text-xs mt-4 py-2 bg-slate-200 dark:bg-slate-700/50 hover:bg-slate-300 dark:hover:bg-slate-600">Bersihkan Monitor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const App = {
+            state: {
+                isSpamming: false,
+                isMonitoring: false,
+                currentTab: 'text',
+                mediaMode: 'upload',
+                selectedFile: null,
+                spamIntervalId: null,
+                monitorOffset: 0,
+            },
+            elements: {
+                botToken: document.getElementById('botToken'),
+                botInfoPanel: document.getElementById('botInfoPanel'),
+                botPhoto: document.getElementById('botPhoto'),
+                botNameInfo: document.getElementById('botNameInfo'),
+                botUsername: document.getElementById('botUsername'),
+                editBotName: document.getElementById('editBotName'),
+                editBotBio: document.getElementById('editBotBio'),
+                saveProfileBtn: document.getElementById('saveProfileBtn'),
+                newProfilePhotoInput: document.getElementById('newProfilePhotoInput'),
+                savePhotoBtn: document.getElementById('savePhotoBtn'),
+                statusLog: document.getElementById('statusLog'),
+                clearLogBtn: document.getElementById('clearLogBtn'),
+                chatId: document.getElementById('chatId'),
+                mediaTabs: document.getElementById('media-tabs'),
+                caption: document.getElementById('caption'),
+                mediaInputArea: document.getElementById('media-input-area'),
+                uploadModeBtn: document.getElementById('upload-mode-btn'),
+                urlModeBtn: document.getElementById('url-mode-btn'),
+                uploadContainer: document.getElementById('upload-container'),
+                urlContainer: document.getElementById('url-container'),
+                fileUpload: document.getElementById('fileUpload'),
+                uploadText: document.getElementById('upload-text'),
+                mediaUrl: document.getElementById('mediaUrl'),
+                sendOnceBtn: document.getElementById('sendOnceBtn'),
+                startSpamBtn: document.getElementById('startSpamBtn'),
+                stopSpamBtn: document.getElementById('stopSpamBtn'),
+                unstoppableSpam: document.getElementById('unstoppableSpam'),
+                spamCount: document.getElementById('spamCount'),
+                spamDelay: document.getElementById('spamDelay'),
+                messageMonitor: document.getElementById('messageMonitor'),
+                clearMonitorBtn: document.getElementById('clearMonitorBtn'),
+                themeToggle: document.getElementById('theme-toggle'),
+                themeIcon: document.getElementById('theme-icon'),
+                toastContainer: document.getElementById('toast-container'),
+            },
+            init() {
+                this.setupEventListeners();
+                this.applyTheme(localStorage.getItem('theme') !== 'light');
+                this.log('Panel Platinum siap digunakan.', 'info');
+            },
+            async callApi(method, params = {}, file = null, fileField = null) {
+                const token = this.elements.botToken.value.trim();
+                if (!token) return null;
+
+                const url = `https://api.telegram.org/bot${token}/${method}`;
+                const options = { method: 'POST' };
+
+                if (file) {
+                    const formData = new FormData();
+                    Object.keys(params).forEach(key => formData.append(key, params[key]));
+                    const mediaKey = fileField || (this.state.currentTab === 'photo' ? 'photo' : this.state.currentTab === 'video' ? 'video' : 'document');
+                    formData.append(mediaKey, file, file.name);
+                    options.body = formData;
+                } else {
+                    options.headers = { 'Content-Type': 'application/json' };
+                    options.body = JSON.stringify(params);
+                }
+                try {
+                    const response = await fetch(url, options);
+                    const data = await response.json();
+                    if (!data.ok) throw new Error(data.description);
+                    return data.result;
+                } catch (error) {
+                    this.log(`API Error: ${error.message}`, 'error');
+                    if (method !== 'getUpdates') this.showToast(`Error: ${error.message}`, 'error');
+                    return null;
+                }
+            },
+            log(message, type = 'info') {
+                const { statusLog } = this.elements;
+                if (statusLog.querySelector('p')?.textContent.includes('Menunggu')) statusLog.innerHTML = '';
+                const typeColor = { success: 'text-green-400', error: 'text-red-400', warn: 'text-yellow-400', info: 'text-sky-400' }[type];
+                statusLog.innerHTML += `<div><span class="text-slate-500">[${new Date().toLocaleTimeString()}]</span> <span class="${typeColor}">${message}</span></div>`;
+                statusLog.scrollTop = statusLog.scrollHeight;
+            },
+            showToast(message, type = 'success') {
+                const { toastContainer } = this.elements;
+                const toast = document.createElement('div');
+                const icon = type === 'success' ? 'ph-check-circle' : 'ph-x-circle';
+                const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+                toast.className = `toast flex items-center gap-3 ${bgColor} text-white font-bold py-3 px-5 rounded-lg shadow-xl`;
+                toast.innerHTML = `<i class="ph ${icon} text-2xl"></i><span>${message}</span>`;
+                toastContainer.appendChild(toast);
+                setTimeout(() => {
+                    toast.classList.add('removing');
+                    toast.addEventListener('animationend', () => toast.remove());
+                }, 3000);
+            },
+            applyTheme(isDark) {
+                document.documentElement.classList.toggle('dark', isDark);
+                this.elements.themeIcon.className = `ph-duotone ph-${isDark ? 'moon' : 'sun'} text-2xl`;
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            },
+            setButtonLoading(btn, isLoading, defaultText = '') {
+                btn.disabled = isLoading;
+                if (isLoading) {
+                    btn.dataset.originalContent = btn.innerHTML;
+                    btn.innerHTML = '<i class="spinner w-5 h-5 border-2 border-white/50 border-t-white rounded-full"></i>';
+                } else {
+                    btn.innerHTML = btn.dataset.originalContent || defaultText;
+                }
+            },
+            switchTab(tabName) {
+                this.state.currentTab = tabName;
+                this.elements.mediaTabs.querySelectorAll('.tab-button').forEach(btn => {
+                    const isSelected = btn.dataset.tab === tabName;
+                    btn.classList.toggle('bg-accent', isSelected);
+                    btn.classList.toggle('text-white', isSelected);
+                    btn.classList.toggle('bg-input-bg', !isSelected);
+                    btn.classList.toggle('text-text-muted', !isSelected);
+                });
+                this.elements.mediaInputArea.classList.toggle('hidden', tabName === 'text');
+                this.elements.caption.placeholder = tabName === 'text' ? 'Tulis pesan Anda di sini...' : 'Tulis caption (opsional)...';
+            },
+            switchMediaMode(mode) {
+                this.state.mediaMode = mode;
+                const { uploadModeBtn, urlModeBtn, uploadContainer, urlContainer } = this.elements;
+                const isUpload = mode === 'upload';
+                uploadModeBtn.classList.toggle('bg-accent', isUpload);
+                uploadModeBtn.classList.toggle('text-white', isUpload);
+                uploadModeBtn.classList.toggle('text-text-muted', !isUpload);
+                urlModeBtn.classList.toggle('bg-accent', !isUpload);
+                urlModeBtn.classList.toggle('text-white', !isUpload);
+                urlModeBtn.classList.toggle('text-text-muted', isUpload);
+                uploadContainer.classList.toggle('hidden', !isUpload);
+                urlContainer.classList.toggle('hidden', isUpload);
+            },
+            async handleBotTokenChange() {
+                this.log('Memverifikasi token...', 'info');
+                const botInfo = await this.callApi('getMe');
+                if (!botInfo) {
+                    this.log('Token tidak valid atau gagal terhubung.', 'error');
+                    this.elements.botInfoPanel.classList.add('hidden');
+                    return;
+                }
+                this.log('Token valid. Mengambil detail profil...', 'success');
+
+                const [descriptionInfo, profilePhotos] = await Promise.all([
+                    this.callApi('getMyDescription'),
+                    this.callApi('getUserProfilePhotos', { user_id: botInfo.id, limit: 1 })
+                ]);
+
+                this.elements.botNameInfo.textContent = botInfo.first_name;
+                this.elements.botUsername.textContent = `@${botInfo.username}`;
+                this.elements.editBotName.value = botInfo.first_name;
+                this.elements.editBotBio.value = descriptionInfo?.description || '';
+                this.elements.botPhoto.style.backgroundImage = 'none';
+
+                if (profilePhotos?.total_count > 0) {
+                    const fileId = profilePhotos.photos[0][0].file_id;
+                    const fileInfo = await this.callApi('getFile', { file_id: fileId });
+                    if (fileInfo) {
+                        const photoUrl = `https://api.telegram.org/file/bot${this.elements.botToken.value.trim()}/${fileInfo.file_path}`;
+                        this.elements.botPhoto.style.backgroundImage = `url(${photoUrl})`;
+                    }
+                }
+
+                this.elements.botInfoPanel.classList.remove('hidden');
+                if (!this.state.isMonitoring) this.startMonitoring();
+            },
+            async handleSaveProfile() {
+                this.setButtonLoading(this.elements.saveProfileBtn, true, 'Simpan Teks Profil');
+                const newName = this.elements.editBotName.value.trim();
+                const newBio = this.elements.editBotBio.value.trim();
+                this.log('Menyimpan perubahan nama/bio...', 'info');
+
+                const [nameResult, bioResult] = await Promise.all([
+                    this.callApi('setMyName', { name: newName }),
+                    this.callApi('setMyDescription', { description: newBio })
+                ]);
+                if (nameResult || bioResult) {
+                    this.showToast('Profil teks berhasil diperbarui!', 'success');
+                    await this.handleBotTokenChange();
+                }
+                this.setButtonLoading(this.elements.saveProfileBtn, false);
+            },
+            async handleSetProfilePhoto() {
+                const { newProfilePhotoInput, savePhotoBtn } = this.elements;
+                const file = newProfilePhotoInput.files[0];
+
+                if (!file) {
+                    this.showToast('Pilih file foto terlebih dahulu!', 'error');
+                    return;
+                }
+                this.setButtonLoading(savePhotoBtn, true, 'Update Foto');
+                this.log('Mengunggah foto profil baru...', 'info');
+
+                const result = await this.callApi('setMyProfilePhoto', {}, file, 'photo');
+
+                if (result) {
+                    this.showToast('Foto profil berhasil diperbarui!', 'success');
+                    this.log('Memuat ulang info bot...', 'info');
+                    await this.handleBotTokenChange();
+                }
+                this.setButtonLoading(savePhotoBtn, false);
+                newProfilePhotoInput.value = '';
+            },
+            async startMonitoring() {
+                if (this.state.isMonitoring) return;
+                this.state.isMonitoring = true;
+                this.log('Monitor pesan diaktifkan.', 'info');
+                if (this.elements.messageMonitor.querySelector('p')?.textContent.includes('Menunggu')) this.elements.messageMonitor.innerHTML = '';
+
+                while (this.state.isMonitoring) {
+                    const updates = await this.callApi('getUpdates', { offset: this.state.monitorOffset, timeout: 30 });
+                    if (!this.state.isMonitoring) break;
+                    if (updates) {
+                        updates.forEach(update => {
+                            this.state.monitorOffset = update.update_id + 1;
+                            const msg = update.message || update.edited_message;
+                            if (msg) {
+                                const from = msg.from ? `${msg.from.first_name} (@${msg.from.username || 'N/A'})` : (msg.chat.title || 'Unknown Chat');
+                                const text = msg.text || msg.caption || `[Media: ${Object.keys(msg).find(k => ['photo','video','document','sticker'].includes(k)) || 'unknown'}]`;
+                                const msgEntry = document.createElement('div');
+                                msgEntry.className = 'p-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-xs';
+                                msgEntry.innerHTML = `<div class="flex justify-between items-center"><strong class="text-sky-500">${from}</strong><span class="text-text-muted text-[10px]">${new Date(msg.date * 1000).toLocaleTimeString()}</span></div><p class="mt-1">${text}</p><div class="text-right mt-1"><button class="btn reply-btn text-xs bg-sky-500 text-white px-2 py-1 rounded" data-chat-id="${msg.chat.id}">Balas</button></div>`;
+                                this.elements.messageMonitor.appendChild(msgEntry);
+                            }
+                        });
+                        if (updates.length > 0) this.elements.messageMonitor.scrollTop = this.elements.messageMonitor.scrollHeight;
+                    } else {
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                    }
+                }
+                this.log('Monitor pesan dihentikan.', 'warn');
+            },
+            getRequestPayload() {
+                const chatId = this.elements.chatId.value.trim();
+                const caption = this.elements.caption.value.trim();
+                if (!chatId) {
+                    this.showToast('Chat ID wajib diisi!', 'error');
+                    return null;
+                }
+                let method, params = { chat_id: chatId }, file = this.state.selectedFile;
+                params.caption = caption;
+                switch (this.state.currentTab) {
+                    case 'text':
+                        method = 'sendMessage';
+                        params.text = caption;
+                        if (!params.text) {
+                            this.showToast('Pesan tidak boleh kosong!', 'error');
+                            return null;
+                        }
+                        delete params.caption;
+                        break;
+                    case 'photo':
+                        method = 'sendPhoto';
+                        break;
+                    case 'video':
+                        method = 'sendVideo';
+                        break;
+                    case 'file':
+                        method = 'sendDocument';
+                        break;
+                }
+                if (this.state.currentTab !== 'text') {
+                    if (this.state.mediaMode === 'url') {
+                        const url = this.elements.mediaUrl.value.trim();
+                        if (!url) {
+                            this.showToast('URL media tidak boleh kosong!', 'error');
+                            return null;
+                        }
+                        const mediaKey = this.state.currentTab === 'file' ? 'document' : this.state.currentTab;
+                        params[mediaKey] = url;
+                        file = null;
+                    } else if (!file) {
+                        this.showToast('File belum dipilih!', 'error');
+                        return null;
+                    }
+                }
+                return { method, params, file };
+            },
+            async handleSendOnce() {
+                const payload = this.getRequestPayload();
+                if (!payload) return;
+                this.setButtonLoading(this.elements.sendOnceBtn, true, '<span class="btn-text">Kirim Sekali</span>');
+                this.log(`Mengirim ${this.state.currentTab} sekali...`, 'info');
+                const result = await this.callApi(payload.method, payload.params, payload.file);
+                if (result) {
+                    this.log('Pengiriman tunggal berhasil!', 'success');
+                    this.showToast('Berhasil terkirim!', 'success');
+                }
+                this.setButtonLoading(this.elements.sendOnceBtn, false);
+            },
+            startSpam() {
+                const payload = this.getRequestPayload();
+                if (!payload) return;
+
+                const count = parseInt(this.elements.spamCount.value) || 100;
+                const delay = parseInt(this.elements.spamDelay.value) || 500;
+
+                this.state.isSpamming = true;
+                this.updateSpamButtons();
+                this.log(`Memulai spam ${this.state.currentTab} (Target: ${count}, Jeda: ${delay}ms)...`, 'warn');
+                let counter = 0;
+
+                this.state.spamIntervalId = setInterval(async () => {
+                    if (!this.state.isSpamming) {
+                        clearInterval(this.state.spamIntervalId);
+                        return;
+                    }
+                    counter++;
+                    const result = await this.callApi(payload.method, payload.params, payload.file);
+                    if (result) {
+                        this.log(`Spam ke-${counter} berhasil.`, 'success');
+                    } else {
+                        this.log(`Gagal mengirim spam ke-${counter}. Menghentikan...`, 'error');
+                        this.stopSpam();
+                        return;
+                    }
+                    if (!this.elements.unstoppableSpam.checked && counter >= count) {
+                        this.stopSpam();
+                        this.log(`Batas spam (${count}x) tercapai. Spam dihentikan.`, 'info');
+                    }
+                }, delay);
+            },
+            stopSpam() {
+                if (!this.state.isSpamming) return;
+                clearInterval(this.state.spamIntervalId);
+                this.state.isSpamming = false;
+                this.updateSpamButtons();
+                this.log('Spam dihentikan oleh pengguna.', 'warn');
+            },
+            updateSpamButtons() {
+                const { startSpamBtn, stopSpamBtn, sendOnceBtn } = this.elements;
+                const isSpamming = this.state.isSpamming;
+                startSpamBtn.disabled = isSpamming;
+                sendOnceBtn.disabled = isSpamming;
+                startSpamBtn.classList.toggle('opacity-50', isSpamming);
+                sendOnceBtn.classList.toggle('opacity-50', isSpamming);
+                stopSpamBtn.disabled = !isSpamming;
+                stopSpamBtn.classList.toggle('opacity-50', !isSpamming);
+                stopSpamBtn.classList.toggle('cursor-not-allowed', !isSpamming);
+            },
+            setupEventListeners() {
+                this.elements.botToken.addEventListener('change', () => this.handleBotTokenChange());
+                this.elements.saveProfileBtn.addEventListener('click', () => this.handleSaveProfile());
+                this.elements.savePhotoBtn.addEventListener('click', () => this.handleSetProfilePhoto());
+                this.elements.clearLogBtn.addEventListener('click', () => {
+                    this.elements.statusLog.innerHTML = '<p class="text-text-muted">Log dibersihkan.</p>';
+                });
+                this.elements.clearMonitorBtn.addEventListener('click', () => {
+                    this.elements.messageMonitor.innerHTML = '<p class="text-text-muted">Monitor dibersihkan.</p>';
+                });
+                this.elements.themeToggle.addEventListener('click', () => this.applyTheme(!document.documentElement.classList.contains('dark')));
+                this.elements.mediaTabs.querySelectorAll('.tab-button').forEach(btn => btn.addEventListener('click', () => this.switchTab(btn.dataset.tab)));
+                this.elements.uploadModeBtn.addEventListener('click', () => this.switchMediaMode('upload'));
+                this.elements.urlModeBtn.addEventListener('click', () => this.switchMediaMode('url'));
+                this.elements.fileUpload.addEventListener('change', e => {
+                    if (e.target.files.length > 0) {
+                        this.state.selectedFile = e.target.files[0];
+                        this.elements.uploadText.textContent = this.state.selectedFile.name;
+                        this.log(`File dipilih: ${this.state.selectedFile.name}`, 'info');
+                    }
+                });
+                this.elements.sendOnceBtn.addEventListener('click', () => this.handleSendOnce());
+                this.elements.startSpamBtn.addEventListener('click', () => this.startSpam());
+                this.elements.stopSpamBtn.addEventListener('click', () => this.stopSpam());
+                this.elements.messageMonitor.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('reply-btn')) {
+                        const targetChatId = e.target.dataset.chatId;
+                        this.elements.chatId.value = targetChatId;
+                        this.log(`Mode Balasan Aktif: Menargetkan Chat ID ${targetChatId}`, 'warn');
+                        this.showToast(`Mode balasan aktif!`, 'success');
+                        this.elements.caption.focus();
+                    }
+                });
+            },
+        };
+
+        App.init();
+    });
+    </script>
+</body>
+</html>
